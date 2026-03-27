@@ -39,3 +39,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+
+# 打包产物（npm run pack / npm pack）
+dist/
+/*.tgz

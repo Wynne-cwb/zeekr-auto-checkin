@@ -1,0 +1,8 @@
+{
+  "name": "zeekr-auto-checkin",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "pack": "mkdir -p dist && node -e \"const {execSync}=require('child_process');const v=require('./package.json').version;execSync('git archive --format=zip --prefix=zeekr-auto-checkin-'+v+'/ -o dist/zeekr-auto-checkin-'+v+'.zip HEAD',{stdio:'inherit'})\""
+  }
+}
