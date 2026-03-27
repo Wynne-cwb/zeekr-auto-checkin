@@ -1,0 +1,4 @@
+interface:
+  display_name: "极氪自动签到"
+  short_description: "极氪每日自动签到 + 领碎片 + 领步行碳积分，配置 Token 即用"
+  default_prompt: "使用 $zeekr-auto-checkin 设置极氪每日自动签到和领取奖励"

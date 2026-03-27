@@ -1,0 +1,41 @@
+# Project
+request.md
+*.test.*
+
+# OS / filesystem
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editors & IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+.project
+.classpath
+.settings/
+*.swp
+*.swo
+*~
+
+# Logs & temp
+*.log
+*.tmp
+*.temp
+*.bak
+.cache/
+
+# Dependencies (if you add Node later)
+node_modules/
+
+# Local env / secrets
+.env
+.env.*
+!.env.example
