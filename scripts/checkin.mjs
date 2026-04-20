@@ -18,14 +18,13 @@ export const API = {
   uncollected: "/zeekrlife-mp-val/v1/carEnergy/getUncollectedBallsPageNew",
   claimDebris: "/zeekrlife-mp-mkt/toc/v1/apply/batchApply",
   claimWalk: "/zeekrlife-mp-val/v1/carEnergy/collectedAllEnergy",
+  claimIntegral: "/zeekrlife-mp-val/v1/carEnergy/collectIntegralZeekrBalls",
 };
 
-/** getUncollected 列表项：碎片 / 步行碳积分 以 valDefineCode 区分（见接口返回） */
+/** getUncollected 列表项：碎片 / 步行碳积分 / 极值 以 valDefineCode 区分（见接口返回） */
 export const VAL_DEFINE_DEBRIS = "DEBRIS";
 export const VAL_DEFINE_WALK = "CARBON_VALUE";
-
-/** 查询可领取 → 领取 为一轮，最多执行轮数 */
-export const MAX_UNCOLLECT_ROUNDS = 5;
+export const VAL_DEFINE_INTEGRAL = "ZEEKR_VALUE";
 
 // ==================== 工具函数 ====================
 
@@ -136,8 +135,11 @@ export async function getUncollected(token, appVersion, deviceId, accountId) {
   const items = data?.data?.uncollectedVal || [];
   const debrisList = items.filter((i) => i.valDefineCode === VAL_DEFINE_DEBRIS);
   const walkList = items.filter((i) => i.valDefineCode === VAL_DEFINE_WALK);
-  log(`📦 可领取: ${debrisList.length} 个碎片, ${walkList.length} 个步行奖励`);
-  return { debrisList, walkList };
+  const integralList = items.filter((i) => i.valDefineCode === VAL_DEFINE_INTEGRAL);
+  log(
+    `📦 可领取: ${debrisList.length} 个碎片, ${walkList.length} 个步行奖励, ${integralList.length} 个极值`
+  );
+  return { debrisList, walkList, integralList };
 }
 
 export async function claimDebris(token, appVersion, deviceId, debrisList) {
@@ -208,6 +210,35 @@ export async function claimWalk(token, appVersion, deviceId, walkList) {
   return totalVal;
 }
 
+export async function claimIntegral(token, appVersion, deviceId, integralList) {
+  if (!integralList.length) {
+    log("🔹 无极值奖励可领取");
+    return null;
+  }
+  let totalVal = 0;
+  for (let i = 0; i < integralList.length; i++) {
+    if (i > 0) {
+      const ms = rand(1000, 2000);
+      log(`⏳ 领取间隔 ${ms}ms...`);
+      await sleep(ms);
+    }
+    const item = integralList[i];
+    const val = item.val || 0;
+    const data = await post(API.claimIntegral, token, appVersion, deviceId, {
+      energyIds: [item.id],
+    });
+    if (data.code === "000000") {
+      totalVal += val;
+      log(`🏆 极值 [${i + 1}/${integralList.length}]: +${val}`);
+    } else {
+      log(
+        `❌ 领取极值失败 [${i + 1}/${integralList.length}]: ${data.msg || JSON.stringify(data)}`
+      );
+    }
+  }
+  return totalVal;
+}
+
 // ==================== CLI ====================
 
 function parseCliArgs(argv) {
@@ -266,34 +297,32 @@ export async function main() {
   log(`⏳ 等待 ${delay1}ms...`);
   await sleep(delay1);
 
-  for (let round = 1; round <= MAX_UNCOLLECT_ROUNDS; round++) {
-    log(`📍 第 ${round}/${MAX_UNCOLLECT_ROUNDS} 轮：查询可领取`);
-    const { debrisList, walkList } = await getUncollected(
-      token,
-      appVersion,
-      deviceId,
-      accountId
-    );
+  const { debrisList, walkList, integralList } = await getUncollected(
+    token,
+    appVersion,
+    deviceId,
+    accountId
+  );
 
-    if (!debrisList.length && !walkList.length) {
-      log(round === 1 ? "🔹 暂无可领取奖励" : "🔹 本轮无可领取，结束");
-      break;
-    }
-
-    await claimDebris(token, appVersion, deviceId, debrisList);
-
-    const delay2 = rand(2000, 3000);
-    log(`⏳ 等待 ${delay2}ms...`);
-    await sleep(delay2);
-
-    await claimWalk(token, appVersion, deviceId, walkList);
-
-    if (round < MAX_UNCOLLECT_ROUNDS) {
-      const gap = rand(2000, 3000);
-      log(`⏳ 轮次间隔 ${gap}ms...`);
-      await sleep(gap);
-    }
+  if (!debrisList.length && !walkList.length && !integralList.length) {
+    log("🔹 暂无可领取奖励");
+    log("🎉 全部完成！");
+    return;
   }
+
+  await claimDebris(token, appVersion, deviceId, debrisList);
+
+  const delay2 = rand(2000, 3000);
+  log(`⏳ 等待 ${delay2}ms...`);
+  await sleep(delay2);
+
+  await claimWalk(token, appVersion, deviceId, walkList);
+
+  const delay3 = rand(2000, 3000);
+  log(`⏳ 等待 ${delay3}ms...`);
+  await sleep(delay3);
+
+  await claimIntegral(token, appVersion, deviceId, integralList);
 
   log("🎉 全部完成！");
 }
