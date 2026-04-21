@@ -20,7 +20,7 @@
 全流程自动化，成功或失败都发回你当前这个对话，不用改发送目标。<br>
 你只需要提供一次 token 和 device_id，剩下的交给 openclaw。
 
-[效果示例](#效果示例) · [安装](#安装) · [故障排查](#故障排查)
+[效果示例](#效果示例) · [抓包](#抓包-token-和-device_id) · [安装](#安装) · [故障排查](#故障排查)
 
 </div>
 
@@ -51,6 +51,26 @@ $ ZEEKR_TOKEN="Bearer eyJ..." ZEEKR_DEVICE_ID="12345..." \
 📨 通知已发回你配置时所在的对话
 ```
 
+## 抓包 token 和 device_id
+
+openclaw 帮你跑签到，需要先从极氪 App 的网络请求里抓到两个值。五步搞定：
+
+1. **装抓包工具**
+   - 全平台首选：[Reqable](https://reqable.com/zh-CN/)（Win / macOS / Linux / iOS / Android 都能装，中文界面）
+   - iOS 备选：[Stream](https://apps.apple.com/cn/app/stream/id1312141691)（免费、免越狱）
+   - PC 备选（Windows / macOS / Linux）：[Charles](https://www.charlesproxy.com/) / [Proxyman](https://proxyman.io/)
+   - Android 备选：HttpCanary / Packet Capture
+2. **开启抓包 + 装 HTTPS 证书**（按工具文档走一遍即可）
+3. **打开极氪 App**，随便点一下触发网络请求
+4. **按域名过滤** `api-gw-toc.zeekrlife.com`
+5. **复制任意一条请求的请求头**，两个字段：
+   - `Authorization`：`Bearer eyJ...` 整串
+   - `device_id`：纯数字字符串
+
+把这两个值丢给 openclaw，剩下的它来搞定。
+
+---
+
 ## 安装
 
 复制下面命令给 openclaw 执行：
@@ -75,9 +95,10 @@ openclaw 会自动走完：索要 token → 手动验证 → 写 launchd → 近
 用户     ❯ 安装 npx skills add simmzl/zeekr-auto-checkin
 
 openclaw ❯ 好。我需要两个东西 ——
-           1. 极氪 App 请求头里的 Authorization（Bearer eyJ... 整串）
-           2. 同一条请求的 device_id（纯数字）
-           在 App 里用 Stream / Charles 抓一条请求，两个字段复制过来。
+           1. Authorization（Bearer eyJ... 整串）
+           2. device_id（纯数字）
+           从 api-gw-toc.zeekrlife.com 域名下任意一条请求的请求头里复制。
+           不会抓包？看上面《抓包 token 和 device_id》那节，五步搞定。
 
 用户     ❯ Bearer eyJhbGc...  /  1234567890...
 
