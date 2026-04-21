@@ -18,7 +18,7 @@
 
 签到 · 领碎片 · 领步行碳积分 · 领极值能量球，<br>
 全流程自动化，成功或失败都发回你当前这个对话，不用改发送目标。<br>
-你只需要交出一次 token，剩下的交给 openclaw。
+你只需要提供一次 token 和 device_id，剩下的交给 openclaw。
 
 [效果示例](#效果示例) · [安装](#安装) · [故障排查](#故障排查)
 
@@ -51,11 +51,12 @@ $ ZEEKR_TOKEN="Bearer eyJ..." ZEEKR_DEVICE_ID="12345..." \
 📨 通知已发回你配置时所在的对话
 ```
 
-
 ## 安装
 
+复制下面命令给 openclaw 执行：
+
 ```bash
-npx skills add simmzl/zeekr-auto-checkin
+帮我安装这个 skill：npx skills add simmzl/zeekr-auto-checkin
 ```
 
 然后在 openclaw 里说：
@@ -213,12 +214,6 @@ zeekr-auto-checkin/
 
 配一次，之后每天省 3 分钟打开极氪 App 签到的时间。一年就是 18 小时。
 
-觉得值的话，[到 GitHub 点个 ⭐](https://github.com/simmzl/zeekr-auto-checkin) 就是对维护者唯一的回报 —— 也顺便让更多极氪车主看到。
+觉得值的话，star 一下这个仓库就是对维护者唯一的回报，也顺便让更多极氪车主看到。
 
 也欢迎提 issue / PR 告诉我你踩到的坑。
-
----
-
-## License
-
-[MIT](LICENSE) — 随便用，随便改。
