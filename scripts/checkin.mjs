@@ -4,8 +4,10 @@
  * 零依赖，仅需 Node.js >= 18
  *
  * 用法:
- *   ZEEKR_TOKEN="Bearer eyJ..." ZEEKR_DEVICE_ID="你的设备ID" node checkin.mjs
- *   node checkin.mjs --token "Bearer eyJ..." --device-id "你的设备ID"
+ *   ZEEKR_TOKEN="Bearer eyJ..." node checkin.mjs
+ *   node checkin.mjs --token "Bearer eyJ..."
+ *
+ * 设备 ID 会自动从 JWT 的 accountLoginInfoDTO.lastLoginDeviceId 提取。
  */
 
 import { createHash } from "crypto";
@@ -51,9 +53,10 @@ export function parseToken(token) {
   );
   const sub = JSON.parse(payload.sub);
   const accountId = String(sub.accountInfoDTO.accountId);
+  const deviceId = sub.accountLoginInfoDTO?.lastLoginDeviceId;
   const expDate = new Date(payload.exp * 1000);
   const daysLeft = Math.floor((expDate - Date.now()) / 86400000);
-  return { accountId, expDate, daysLeft };
+  return { accountId, deviceId, expDate, daysLeft };
 }
 
 export async function getLatestVersion() {
@@ -63,10 +66,6 @@ export async function getLatestVersion() {
   } catch {
     return "4.9.33";
   }
-}
-
-export function generateDeviceId(token) {
-  return createHash("md5").update(token).digest("hex").replace(/[a-f]/g, "").slice(0, 20);
 }
 
 export function buildHeaders(token, appVersion, deviceId) {
@@ -246,7 +245,6 @@ function parseCliArgs(argv) {
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--token" || a === "-t") out.token = argv[++i];
-    else if (a === "--device-id" || a === "-d") out.deviceId = argv[++i];
   }
   return out;
 }
@@ -256,26 +254,20 @@ function parseCliArgs(argv) {
 export async function main() {
   const cli = parseCliArgs(process.argv);
   const token = cli.token || process.env.ZEEKR_TOKEN;
-  const deviceId = cli.deviceId || process.env.ZEEKR_DEVICE_ID;
 
   if (!token) {
     console.error("[极氪签到] ❌ 缺少 Token");
-    console.error(
-      '用法: ZEEKR_TOKEN="Bearer eyJ..." ZEEKR_DEVICE_ID="设备ID" node checkin.mjs'
-    );
-    console.error('  或: node checkin.mjs --token "Bearer eyJ..." --device-id "设备ID"');
-    process.exit(1);
-  }
-  if (!deviceId) {
-    console.error("[极氪签到] ❌ 缺少设备 ID");
-    console.error(
-      '用法: ZEEKR_TOKEN="Bearer eyJ..." ZEEKR_DEVICE_ID="设备ID" node checkin.mjs'
-    );
-    console.error('  或: node checkin.mjs --token "Bearer eyJ..." --device-id "设备ID"');
+    console.error('用法: ZEEKR_TOKEN="Bearer eyJ..." node checkin.mjs');
+    console.error('  或: node checkin.mjs --token "Bearer eyJ..."');
     process.exit(1);
   }
 
-  const { accountId, expDate, daysLeft } = parseToken(token);
+  const { accountId, deviceId, expDate, daysLeft } = parseToken(token);
+  if (!deviceId) {
+    console.error("[极氪签到] ❌ JWT 中未找到设备 ID (accountLoginInfoDTO.lastLoginDeviceId)");
+    process.exit(1);
+  }
+
   log(`${new Date().toLocaleString("zh-CN")} | 账号: ${accountId}`);
   log(`Token 过期: ${expDate.toLocaleDateString("zh-CN")} (剩余 ${daysLeft} 天)`);
 
